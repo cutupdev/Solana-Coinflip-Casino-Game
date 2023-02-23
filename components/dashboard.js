@@ -467,6 +467,7 @@ export const Dashboard = ({ updateBalance, balance }) => {
   const MaxButton = () => (
     <Button
       variant='contained'
+      disabled={spinCount < 6 ?? true}
       onClick={setMaxValue}
       sx={{
         ml: 3,
