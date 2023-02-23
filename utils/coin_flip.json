@@ -1,0 +1,357 @@
+{
+  "version": "0.1.0",
+  "name": "coin_flip",
+  "constants": [
+    {
+      "name": "TREASURY_TAG",
+      "type": {
+        "defined": "&[u8]"
+      },
+      "value": "b\"coin-flip-treasury\""
+    },
+    {
+      "name": "VAULT_TAG",
+      "type": {
+        "defined": "&[u8]"
+      },
+      "value": "b\"coin-flip-vault\""
+    },
+    {
+      "name": "USER_TREASURY_TAG",
+      "type": {
+        "defined": "&[u8]"
+      },
+      "value": "b\"coin-flip-user-treasury\""
+    }
+  ],
+  "instructions": [
+    {
+      "name": "createTreasury",
+      "accounts": [
+        {
+          "name": "tradeTreasury",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tradeMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tradeVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "clock",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "claimTreasury",
+      "accounts": [
+        {
+          "name": "tradeTreasury",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tradeMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tradeVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "userVault",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "clock",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "processGame",
+      "accounts": [
+        {
+          "name": "tradeTreasury",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tradeMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tradeVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "userTreasury",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "userVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "clock",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        },
+        {
+          "name": "choice",
+          "type": "bool"
+        },
+        {
+          "name": "isSpin",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "claim",
+      "accounts": [
+        {
+          "name": "tradeTreasury",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tradeMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tradeVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "userTreasury",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "userVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "clock",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    }
+  ],
+  "accounts": [
+    {
+      "name": "TradeTreasury",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "superOwner",
+            "type": "publicKey"
+          },
+          {
+            "name": "tradeMint",
+            "type": "publicKey"
+          },
+          {
+            "name": "tradeVault",
+            "type": "publicKey"
+          },
+          {
+            "name": "balance",
+            "type": "u64"
+          },
+          {
+            "name": "claimedAmount",
+            "type": "u64"
+          },
+          {
+            "name": "decimals",
+            "type": "u32"
+          },
+          {
+            "name": "reserved",
+            "type": {
+              "array": [
+                "u128",
+                5
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "UserTreasury",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "owner",
+            "type": "publicKey"
+          },
+          {
+            "name": "tradeTreasury",
+            "type": "publicKey"
+          },
+          {
+            "name": "tradeMint",
+            "type": "publicKey"
+          },
+          {
+            "name": "balance",
+            "type": "u64"
+          },
+          {
+            "name": "generalWinCnt",
+            "type": "u64"
+          },
+          {
+            "name": "generalLoseCnt",
+            "type": "u64"
+          },
+          {
+            "name": "spinWinCnt",
+            "type": "u64"
+          },
+          {
+            "name": "spinLoseCnt",
+            "type": "u64"
+          },
+          {
+            "name": "decimals",
+            "type": "u32"
+          },
+          {
+            "name": "reserved",
+            "type": {
+              "array": [
+                "u128",
+                3
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "NotAllowed",
+      "msg": "Not Allowed"
+    }
+  ],
+  "metadata": {
+    "address": "4Qe9somyZaeDio9TpMeUTjEyfpx7aSHYGHp7cBaxB77K"
+  }
+}
