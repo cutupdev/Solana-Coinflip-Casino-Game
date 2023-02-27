@@ -17,10 +17,8 @@ export const SOLANA_HOST = process.env.REACT_APP_SOLANA_API_URL
   // : "http://localhost:8899";
   : "https://api.devnet.solana.com";
 
-  console.log(SOLANA_HOST)
-
-  export const STABLE_POOL_PROGRAM_ID = new PublicKey(
-    'FMgTFH3VJUfZVqGoqjjcskrxKWU3MUkCGV5NtnF6MYa1',
+  export const PROGRAM_ID = new PublicKey(
+    'DjVLuEvaZTFRoLPK2cN6ujGohS3Vp9URmE3qNX2qQPwt',
   );
   
-  export const STABLE_POOL_IDL = coin_flip;
+  export const IDL = coin_flip;

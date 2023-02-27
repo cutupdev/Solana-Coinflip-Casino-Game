@@ -1,23 +1,17 @@
 import styles from '../styles/Home.module.css'
 import { useWallet } from '@solana/wallet-adapter-react';
-import useWalletBalance from '../context/useWalletBalance';
-import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { useState } from 'react';
 import { Dashboard } from '../components/dashboard';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import Navbar from '../components/Navbar';
 import { Typography } from '@mui/material';
 import { styled } from '@mui/system';
-import * as anchor from "@project-serum/anchor";
-import { SOLANA_HOST } from "../utils/const";
-import { LAMPORTS_PER_SOL } from "@solana/web3.js";
+
+import { connection, LAMPORTS_PER_SOL} from '../utils/integration';
 
 export default function Home() {
   const wallet = useWallet();
   const [balance, setBalance] = useState(0);
-
-  const connection = new anchor.web3.Connection(SOLANA_HOST);
-
 
   const Welcome = styled(Typography)(({ theme }) => ({
     fontSize: '40px !important',

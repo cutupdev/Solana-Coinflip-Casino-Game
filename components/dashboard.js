@@ -13,43 +13,19 @@ import CasinoIcon from '@mui/icons-material/Casino'
 import AutoModeIcon from '@mui/icons-material/AutoMode';
 import PaidIcon from '@mui/icons-material/Paid';
 import { styled } from '@mui/system';
-
-import { ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID, createAssociatedTokenAccountInstruction, createCloseAccountInstruction, getAssociatedTokenAddress, getOrCreateAssociatedTokenAccount } from "@solana/spl-token";
-import { useWallet } from "@solana/wallet-adapter-react";
-import { Account, STAKE_CONFIG_ID } from "@solana/web3.js";
-import { SOLANA_HOST } from "../utils/const";
-import { getProgramInstance } from "../utils/get-program";
-import { TokenInstructions } from '@project-serum/serum';
-
-
 import WinLoseModal from './WinLoseModal'
 import Spinner from './Spinner';
+import { useWallet } from "@solana/wallet-adapter-react";
 
-const anchor = require('@project-serum/anchor');
-const { BN, web3, Program, ProgramError, Provider } = anchor
-// const provider = anchor.Provider.local()
-// anchor.setProvider(provider);
-const utf8 = anchor.utils.bytes.utf8;
-const { PublicKey, SystemProgram, Keypair, Transaction } = web3
+import {
+  getUserTreasuryAccount,
+  processGame
+} from "../utils/integration"
 
-export const WRAPPED_SOL_MINT = new PublicKey(
-  'So11111111111111111111111111111111111111112',
-);
 
-export const SOL_DECIMALS = 9;
-
-const defaultAccounts = {
-  tokenProgram: TOKEN_PROGRAM_ID,
-  clock: anchor.web3.SYSVAR_CLOCK_PUBKEY,
-  systemProgram: SystemProgram.programId,
-  rent: anchor.web3.SYSVAR_RENT_PUBKEY,
-}
 
 export const Dashboard = ({ updateBalance, balance }) => {
   const wallet = useWallet();
-  const connection = new anchor.web3.Connection(SOLANA_HOST);
-
-  const program = getProgramInstance(connection, wallet);
 
 
   //State variables
@@ -67,35 +43,18 @@ export const Dashboard = ({ updateBalance, balance }) => {
 
   useEffect(() => {
     const init = async () => {
-      let [tradeVault] = await anchor.web3.PublicKey.findProgramAddress(
-        [Buffer.from('coin-flip-vault'), WRAPPED_SOL_MINT.toBuffer()],
-        program.programId
-      );
-      console.log("Vault address where we should fund sol ->", tradeVault.toString());
 
       updateBalance();
-      let [userTreasury] = await anchor.web3.PublicKey.findProgramAddress(
-        [Buffer.from('coin-flip-user-treasury'), wallet.publicKey.toBuffer(), WRAPPED_SOL_MINT.toBuffer()],
-        program.programId
-      );
-
-      let userTreasuryAccount
-
-      try {
-        userTreasuryAccount = await program.account.userTreasury.fetchNullable(userTreasury);
-        if(!userTreasuryAccount) {
-          setSpinCount(0);
-          setClaimableAmount(0);
-        }
-        else {
-          setSpinCount(userTreasuryAccount.spinWinCnt.toNumber() + userTreasuryAccount.spinLoseCnt.toNumber());
-          setClaimableAmount(userTreasuryAccount.balance.toNumber());
-        }
-      } catch (e) {
-        console.log(e.message);
+      const userTreasuryAccount = await getUserTreasuryAccount();
+      if(!userTreasuryAccount) {
+        setSpinCount(0);
+        setClaimableAmount(0);
+      }
+      else {
+        setSpinCount(userTreasuryAccount.spinWinCnt.toNumber() + userTreasuryAccount.spinLoseCnt.toNumber());
+        setClaimableAmount(userTreasuryAccount.balance.toNumber());
       }
     }
-
     init()
   })
 
@@ -104,105 +63,17 @@ export const Dashboard = ({ updateBalance, balance }) => {
       alert('Bet amount should be at least 0.05 SOL!')
     }
     const isHead = selected === "HEADS" ? true : false;
-    processGame(betAmount * 1000000000, isHead, false)
+    processGameUI(betAmount * 1000000000, isHead, false)
   }
   const freeSpin = () => {
     const isHead = selected === "HEADS" ? true : false;
-    processGame(0, isHead, true)
+    processGameUI(0, isHead, true)
   }
 
-  const createTreasury = async () => {
-    let [tradeTreasury] = await anchor.web3.PublicKey.findProgramAddress(
-      [Buffer.from('coin-flip-treasury'), WRAPPED_SOL_MINT.toBuffer()],
-      program.programId
-    );
+  const processGameUI = async (amount, isHead, isSpin) => {
+    const oldUserTreasuryAccount = await getUserTreasuryAccount();
 
-    let [tradeVault] = await anchor.web3.PublicKey.findProgramAddress(
-      [Buffer.from('coin-flip-vault'), WRAPPED_SOL_MINT.toBuffer()],
-      program.programId
-    );
-
-    let tx = await program.rpc.createTreasury({
-      accounts: {
-        tradeTreasury: tradeTreasury,
-        tradeMint: WRAPPED_SOL_MINT,
-        tradeVault: tradeVault,
-        authority: wallet.publicKey,
-        ...defaultAccounts
-      },
-    });
-
-    console.log("successfully create global treasury, tx=>",tx);
-  }
-
-  const processGame = async (amount, isHead, isSpin) => {
-    let [tradeTreasury] = await anchor.web3.PublicKey.findProgramAddress(
-      [Buffer.from('coin-flip-treasury'), WRAPPED_SOL_MINT.toBuffer()],
-      program.programId
-    );
-
-    let [tradeVault] = await anchor.web3.PublicKey.findProgramAddress(
-      [Buffer.from('coin-flip-vault'), WRAPPED_SOL_MINT.toBuffer()],
-      program.programId
-    );
-    console.log(tradeVault.toBase58());
-
-    let [userTreasury] = await anchor.web3.PublicKey.findProgramAddress(
-      [Buffer.from('coin-flip-user-treasury'), wallet.publicKey.toBuffer(), WRAPPED_SOL_MINT.toBuffer()],
-      program.programId
-    );
-
-    let oldUserTreasuryAccount
-
-    try {
-      oldUserTreasuryAccount = await program.account.userTreasury.fetchNullable(userTreasury);
-      console.log(oldUserTreasuryAccount.generalWinCnt.toNumber(), oldUserTreasuryAccount.generalLoseCnt.toNumber(), oldUserTreasuryAccount.balance.toNumber());
-    } catch (e) {
-      console.log(e.message);
-    }
-
-    const wrappedSolAccount = new Account();
-    const transaction = new Transaction();
-    const signers = [];
-
-    transaction.add(
-      SystemProgram.createAccount({
-        fromPubkey: wallet.publicKey,
-        lamports: amount + 2.04e6,
-        newAccountPubkey: wrappedSolAccount.publicKey,
-        programId: TOKEN_PROGRAM_ID,
-        space: 165,
-      }),
-      TokenInstructions.initializeAccount({
-        account: wrappedSolAccount.publicKey,
-        mint: WRAPPED_SOL_MINT,
-        owner: wallet.publicKey,
-      }),
-      program.instruction.processGame(new BN(amount), isHead, isSpin, {
-        accounts: {
-          tradeTreasury: tradeTreasury,
-          tradeMint: WRAPPED_SOL_MINT,
-          tradeVault: tradeVault,
-          userTreasury: userTreasury,
-          userVault: wrappedSolAccount.publicKey,
-          authority: wallet.publicKey,
-          ...defaultAccounts
-        },
-      }),
-      TokenInstructions.closeAccount({
-        source: wrappedSolAccount.publicKey,
-        destination: wallet.publicKey,
-        owner: wallet.publicKey,
-      }),
-    );
-    signers.push(wrappedSolAccount);
-
-    try {
-      const tx = await program.provider.send(transaction, signers);
-      console.log(tx);
-    } catch (e) {
-
-    }
+    const res = await processGame(amount, isHead, isSpin);
 
     updateBalance();
 
@@ -274,7 +145,6 @@ export const Dashboard = ({ updateBalance, balance }) => {
               break;
             }
           }
-
         } else {
           if (newUserTreasuryAccount) {
             const newWins = isSpin ? newUserTreasuryAccount.spinWinCnt.toNumber() : newUserTreasuryAccount.generalWinCnt.toNumber();
