@@ -29,6 +29,7 @@ import {
   isSuperOwner,
   getValutAmount
 } from "../utils/integration"
+import { getDisplayName } from 'next/dist/shared/lib/utils';
 
 
 
@@ -57,7 +58,9 @@ export const Dashboard = ({ updateBalance, balance }) => {
       initCoinFlipProgram(wallet);
 
       const vaultBalance = await getValutAmount();
+      console.log({vaultBalance})
       setDisplayVaultBalance(vaultBalance.amount / (10 ** vaultBalance.decimals))
+      console.log({displayVaultBalance})
 
       const userTreasuryAccount = await getUserTreasuryAccount();
       if (!userTreasuryAccount) {

@@ -318,7 +318,8 @@ export const getValutAmount = async () => {
     
     if(!tradeTreasuryData) return {amount: 0, decimals: 9};
     const tradeVaultAmount = await connection.getTokenAccountBalance(tradeVault);
-    return {amount:tradeVaultAmount.amount, decimals: tradeVaultAmount.decimals};
+    console.log(tradeVaultAmount)
+    return {amount:tradeVaultAmount.value.amount, decimals: tradeVaultAmount.value.decimals};
 }
 
 export const pda = async (
