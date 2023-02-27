@@ -20,7 +20,7 @@ export const SOLANA_HOST = process.env.REACT_APP_SOLANA_API_URL
   console.log(SOLANA_HOST)
 
   export const STABLE_POOL_PROGRAM_ID = new PublicKey(
-    '4Qe9somyZaeDio9TpMeUTjEyfpx7aSHYGHp7cBaxB77K',
+    'FMgTFH3VJUfZVqGoqjjcskrxKWU3MUkCGV5NtnF6MYa1',
   );
   
   export const STABLE_POOL_IDL = coin_flip;
