@@ -3,7 +3,7 @@ import * as splToken from '@solana/spl-token';
 import { IDL, PROGRAM_ID, SOLANA_HOST } from './const';
 
 export const WRAPPED_SOL_MINT = splToken.NATIVE_MINT;
-export const connection = anchor.web3.Connection(SOLANA_HOST);
+export const connection = new anchor.web3.Connection(SOLANA_HOST);
 export const LAMPORTS_PER_SOL = anchor.web3.LAMPORTS_PER_SOL;
 
 export const defaultAccounts = {
@@ -21,7 +21,6 @@ let program = null;
 let currentWallet = null;
 
 export function initCoinFlipProgram(
-  connection,
   wallet,
 ) {
     let result = { success: true, data: null, msg: "" };
@@ -52,7 +51,7 @@ export const createTreasury = async (
         const tradeVault = await pda([VAULT_TAG, WRAPPED_SOL_MINT.toBuffer()], program.programId);
         const transaction = new anchor.web3.Transaction();
 
-        transaction.push(
+        transaction.add(
             program.instruction.createTreasury({
                 accounts: {
                     tradeTreasury: tradeTreasury,
@@ -88,19 +87,19 @@ export const claimPlatformReward = async (
         const WSOLTokenAccount = new anchor.web3.Account();
         const transaction = new anchor.web3.Transaction();
 
-        transaction.push(
+        transaction.add(
             anchor.web3.SystemProgram.createAccount({
                 fromPubkey: signer,
                 lamports: 2.04e6,
                 newAccountPubkey: WSOLTokenAccount.publicKey,
-                programId: TOKEN_PROGRAM_ID,
+                programId: splToken.TOKEN_PROGRAM_ID,
                 space: 165,
             }),
-            splToken.createInitializeAccountInstruction({
-                account: WSOLTokenAccount.publicKey,
-                mint: WRAPPED_SOL_MINT,
-                owner: signer,
-            }),
+            splToken.createInitializeAccountInstruction(
+                WSOLTokenAccount.publicKey,
+                WRAPPED_SOL_MINT,
+                signer,
+            ),
             program.instruction.claimTreasury({
                 accounts: {
                     tradeTreasury: tradeTreasury,
@@ -111,11 +110,11 @@ export const claimPlatformReward = async (
                     ...defaultAccounts
                 }
             }),
-            splToken.createCloseAccountInstruction({
-                account: WSOLTokenAccount.publicKey,
-                destination: signer,
-                authority: signer,
-            }),
+            splToken.createCloseAccountInstruction(
+                WSOLTokenAccount.publicKey,
+                signer,
+                signer,
+            ),
         );
         const tx = await program.provider.send(transaction, [WSOLTokenAccount, ...signers]);
 
@@ -142,24 +141,25 @@ export const processGame = async (
         const tradeTreasury = await pda([TREASURY_TAG, WRAPPED_SOL_MINT.toBuffer()], program.programId)
         const tradeVault = await pda([VAULT_TAG, WRAPPED_SOL_MINT.toBuffer()], program.programId);
         const userTreasury = await pda([USER_TREASURY_TAG, signer.toBuffer(), WRAPPED_SOL_MINT.toBuffer()], program.programId);
-
+        const rent = await splToken.getMinimumBalanceForRentExemptAccount(connection)
         const WSOLTokenAccount = new anchor.web3.Account();
         const transaction = new anchor.web3.Transaction();
-
+        
         transaction.add(
             anchor.web3.SystemProgram.createAccount({
                 fromPubkey: signer,
-                lamports: amount + 2.04e6,
+                lamports: amount + rent,
                 newAccountPubkey: WSOLTokenAccount.publicKey,
-                programId: TOKEN_PROGRAM_ID,
-                space: 165,
+                programId: splToken.TOKEN_PROGRAM_ID,
+                space: splToken.AccountLayout.span,
             }),
-            splToken.createInitializeAccountInstruction({
-                account: WSOLTokenAccount.publicKey,
-                mint: WRAPPED_SOL_MINT,
-                owner: signer,
-            }),
-            program.instruction.processGame(new BN(amount), isHead, isSpin, {
+            splToken.createInitializeAccountInstruction(
+                WSOLTokenAccount.publicKey,
+                WRAPPED_SOL_MINT,
+                signer,
+                splToken.TOKEN_PROGRAM_ID
+            ),
+            program.instruction.processGame(new anchor.BN(amount), isHead, isSpin, {
                 accounts: {
                     tradeTreasury: tradeTreasury,
                     tradeMint: WRAPPED_SOL_MINT,
@@ -170,12 +170,13 @@ export const processGame = async (
                     ...defaultAccounts
                 },
             }),
-            splToken.createCloseAccountInstruction({
-                account: WSOLTokenAccount.publicKey,
-                destination: signer,
-                authority: signer,
-            }),
+            splToken.createCloseAccountInstruction(
+                WSOLTokenAccount.publicKey,
+                signer,
+                signer,
+            ),
         );
+        console.log(transaction)
 
         const tx = await program.provider.send(transaction, [WSOLTokenAccount, ...signers]);
 
@@ -199,7 +200,8 @@ export const claimUserReward = async (
         const tradeTreasury = await pda([TREASURY_TAG, WRAPPED_SOL_MINT.toBuffer()], program.programId)
         const tradeVault = await pda([VAULT_TAG, WRAPPED_SOL_MINT.toBuffer()], program.programId);
         const userTreasury = await pda([USER_TREASURY_TAG, signer.toBuffer(), WRAPPED_SOL_MINT.toBuffer()], program.programId);
-
+        const rent = await splToken.getMinimumBalanceForRentExemptAccount(connection)
+        console.log(tradeVault.toString())
         const WSOLTokenAccount = new anchor.web3.Account();
         const transaction = new anchor.web3.Transaction();
 
@@ -208,14 +210,14 @@ export const claimUserReward = async (
                 fromPubkey: signer,
                 lamports: 2.04e6,
                 newAccountPubkey: WSOLTokenAccount.publicKey,
-                programId: TOKEN_PROGRAM_ID,
+                programId: splToken.TOKEN_PROGRAM_ID,
                 space: 165,
             }),
-            splToken.createInitializeAccountInstruction({
-                account: WSOLTokenAccount.publicKey,
-                mint: WRAPPED_SOL_MINT,
-                owner: signer,
-            }),
+            splToken.createInitializeAccountInstruction(
+                WSOLTokenAccount.publicKey,
+                WRAPPED_SOL_MINT,
+                signer,
+            ),
             program.instruction.claim({
                 accounts: {
                     tradeTreasury: tradeTreasury,
@@ -227,11 +229,11 @@ export const claimUserReward = async (
                     ...defaultAccounts
                 },
             }),
-            splToken.createCloseAccountInstruction({
-                account: WSOLTokenAccount.publicKey,
-                destination: signer,
-                authority: signer,
-            }),
+            splToken.createCloseAccountInstruction(
+                WSOLTokenAccount.publicKey,
+                signer,
+                signer,
+            ),
         );
 
         const tx = await program.provider.send(transaction, [WSOLTokenAccount, ...signers]);
@@ -247,10 +249,69 @@ export const claimUserReward = async (
 }
 
 export const getUserTreasuryAccount = async () => {
-    const userTreasury = await pda([USER_TREASURY_TAG, signer.toBuffer(), WRAPPED_SOL_MINT.toBuffer()], program.programId);
+    const userTreasury = await pda([USER_TREASURY_TAG, currentWallet.publicKey.toBuffer(), WRAPPED_SOL_MINT.toBuffer()], program.programId);
     const userTreasuryAccountData = await program.account.userTreasury.fetchNullable(userTreasury);
     return userTreasuryAccountData;
 }
+
+export const isSuperOwner = async () => {
+    const tradeTreasury = await pda([TREASURY_TAG, WRAPPED_SOL_MINT.toBuffer()], program.programId);
+    const tradeTreasuryData = await program.account.tradeTreasury.fetchNullable(tradeTreasury);
+    if (!tradeTreasuryData || (currentWallet?.publicKey && tradeTreasuryData.superOwner.toString() == currentWallet?.publicKey.toString())) return true;
+    return false;
+}
+
+export const depositToVault = async (
+    amount,
+    signer = currentWallet.publicKey,
+    signers = [],
+) => {
+    let result = { success: true, data: null, msg: "" };
+    try {
+        const tradeVault = await pda([VAULT_TAG, WRAPPED_SOL_MINT.toBuffer()], program.programId);
+        const WSOLTokenAccount = new anchor.web3.Account();
+        const transaction = new anchor.web3.Transaction();
+
+        transaction.add(
+            anchor.web3.SystemProgram.createAccount({
+                fromPubkey: signer,
+                lamports: amount + 2.04e6,
+                newAccountPubkey: WSOLTokenAccount.publicKey,
+                programId: splToken.TOKEN_PROGRAM_ID,
+                space: 165,
+            }),
+            splToken.createInitializeAccountInstruction(
+                WSOLTokenAccount.publicKey,
+                WRAPPED_SOL_MINT,
+                signer,
+
+            ),
+            splToken.createTransferInstruction(
+                WSOLTokenAccount.publicKey,
+                tradeVault,
+                signer,
+                amount,
+            ),
+            splToken.createCloseAccountInstruction(
+                WSOLTokenAccount.publicKey,
+                signer,
+                signer,
+            ),
+        );
+
+        const tx = await program.provider.send(transaction, [WSOLTokenAccount, ...signers]);
+
+        console.log("tx= ", tx);
+        result.msg = "successfully claimed reward";
+    } catch(e) {
+        result.success = false;
+        result.msg = e.message;
+    } finally {
+        return result;
+    }
+}
+
+
 
 export const pda = async (
     seeds,

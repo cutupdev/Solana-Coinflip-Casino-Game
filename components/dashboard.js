@@ -18,8 +18,15 @@ import Spinner from './Spinner';
 import { useWallet } from "@solana/wallet-adapter-react";
 
 import {
+  initCoinFlipProgram,
+  createTreasury,
   getUserTreasuryAccount,
-  processGame
+  processGame,
+  claimUserReward,
+  claimPlatformReward,
+  LAMPORTS_PER_SOL,
+  depositToVault,
+  isSuperOwner,
 } from "../utils/integration"
 
 
@@ -40,13 +47,14 @@ export const Dashboard = ({ updateBalance, balance }) => {
   const [isLoading, setIsLoading] = useState(false)
   const [isClaming, setIsClaming] = useState(false)
   const [depositWSolUIAmount, setDepositWSolUIAmount] = useState(0);
+  const [isOwner, setIsOwner] = useState(false);
 
   useEffect(() => {
     const init = async () => {
-
       updateBalance();
+      initCoinFlipProgram(wallet);
       const userTreasuryAccount = await getUserTreasuryAccount();
-      if(!userTreasuryAccount) {
+      if (!userTreasuryAccount) {
         setSpinCount(0);
         setClaimableAmount(0);
       }
@@ -54,6 +62,8 @@ export const Dashboard = ({ updateBalance, balance }) => {
         setSpinCount(userTreasuryAccount.spinWinCnt.toNumber() + userTreasuryAccount.spinLoseCnt.toNumber());
         setClaimableAmount(userTreasuryAccount.balance.toNumber());
       }
+      const isOwnerVrf = await isSuperOwner();
+      setIsOwner(isOwnerVrf);
     }
     init()
   })
@@ -73,17 +83,23 @@ export const Dashboard = ({ updateBalance, balance }) => {
   const processGameUI = async (amount, isHead, isSpin) => {
     const oldUserTreasuryAccount = await getUserTreasuryAccount();
 
+    console.log(oldUserTreasuryAccount)
+
     const res = await processGame(amount, isHead, isSpin);
+    if (!res.success) {
+      console.log(res.msg);
+      return;
+    }
 
     updateBalance();
 
     let newUserTreasuryAccount
-    const isWin = 0;
+    let isWin = 0;
 
     setIsLoading(true)
     while (1) {
       try {
-        newUserTreasuryAccount = await program.account.userTreasury.fetch(userTreasury);
+        newUserTreasuryAccount = await getUserTreasuryAccount();
         setClaimableAmount(newUserTreasuryAccount.balance.toNumber());
 
         if (oldUserTreasuryAccount) {
@@ -103,7 +119,7 @@ export const Dashboard = ({ updateBalance, balance }) => {
               else
                 setBetType("HEADS")
 
-              isWin = 1;
+              isWin = 0;
 
               break;
             } else if (oldWins < newWins && oldLoses === newLoses) {
@@ -113,7 +129,7 @@ export const Dashboard = ({ updateBalance, balance }) => {
               else
                 setBetType("TAILS")
 
-              isWin = 0;
+              isWin = 1;
 
               break;
             }
@@ -189,191 +205,36 @@ export const Dashboard = ({ updateBalance, balance }) => {
   }
 
   const claimReward = async () => {
-    let [tradeTreasury] = await anchor.web3.PublicKey.findProgramAddress(
-      [Buffer.from('coin-flip-treasury'), WRAPPED_SOL_MINT.toBuffer()],
-      program.programId
-    );
-
-    let [tradeVault] = await anchor.web3.PublicKey.findProgramAddress(
-      [Buffer.from('coin-flip-vault'), WRAPPED_SOL_MINT.toBuffer()],
-      program.programId
-    );
-    console.log(tradeVault.toBase58());
-
-    let [userTreasury] = await anchor.web3.PublicKey.findProgramAddress(
-      [Buffer.from('coin-flip-user-treasury'), wallet.publicKey.toBuffer(), WRAPPED_SOL_MINT.toBuffer()],
-      program.programId
-    );
-
-    const transaction = new Transaction();
-    const signers = [];
-
-    const wrappedSolAccount = await getAssociatedTokenAddress(
-      ASSOCIATED_TOKEN_PROGRAM_ID,
-      TOKEN_PROGRAM_ID,
-      WRAPPED_SOL_MINT, // wrapped SOL's mint address
-      wallet.publicKey
-    );
-
-    const ataAccountInfo = await connection.getAccountInfo(wrappedSolAccount);
-    
-    if(!ataAccountInfo) {
-      transaction.add(
-        createAssociatedTokenAccountInstruction(
-          ASSOCIATED_TOKEN_PROGRAM_ID,
-          TOKEN_PROGRAM_ID,
-          WRAPPED_SOL_MINT,
-          wrappedSolAccount,
-          wallet.publicKey,
-          wallet.publicKey
-        )
-      )
-    }
-    transaction.add(
-      program.instruction.claim({
-        accounts: {
-          tradeTreasury: tradeTreasury,
-          tradeMint: WRAPPED_SOL_MINT,
-          tradeVault: tradeVault,
-          userTreasury: userTreasury,
-          userVault: wrappedSolAccount,
-          authority: wallet.publicKey,
-          ...defaultAccounts
-        },
-      }),
-      createCloseAccountInstruction(
-        wrappedSolAccount,
-        wallet.publicKey,
-        wallet.publicKey,
-        [],
-        TOKEN_PROGRAM_ID
-      ),
-    );
-    signers.push(wrappedSolAccount);
-
     setIsClaming(true)
-    try {
-      const tx = await program.provider.send(transaction, signers);
-      console.log(tx);
-      setClaimableAmount(0)
 
-    } catch (e) {
-      alert("Insufficent funds on Smart Contract!")
-      console.log(e.message.error);
+    const res = await claimUserReward();
+    if (res.success == true) {
+      setClaimableAmount(0);
+    } else {
+      console.log(res.msg);
     }
     setIsClaming(false)
 
     updateBalance();
   }
 
+  const createTreasurySubmit = async () => {
+    const res = await createTreasury();
+    console.log(res.msg);
+  }
+
   const withdraw = async () => {
-    let [tradeTreasury] = await anchor.web3.PublicKey.findProgramAddress(
-      [Buffer.from('coin-flip-treasury'), WRAPPED_SOL_MINT.toBuffer()],
-      program.programId
-    );
-
-    let [tradeVault] = await anchor.web3.PublicKey.findProgramAddress(
-      [Buffer.from('coin-flip-vault'), WRAPPED_SOL_MINT.toBuffer()],
-      program.programId
-    );
-
-    let [userTreasury] = await anchor.web3.PublicKey.findProgramAddress(
-      [Buffer.from('coin-flip-user-treasury'), wallet.publicKey.toBuffer(), WRAPPED_SOL_MINT.toBuffer()],
-      program.programId
-    );
-
-    const wrappedSolAccount = new Account();
-    const transaction = new Transaction();
-    const signers = [];
-
-    transaction.add(
-      SystemProgram.createAccount({
-        fromPubkey: wallet.publicKey,
-        lamports: 2.04e6,
-        newAccountPubkey: wrappedSolAccount.publicKey,
-        programId: TOKEN_PROGRAM_ID,
-        space: 165,
-      }),
-      TokenInstructions.initializeAccount({
-        account: wrappedSolAccount.publicKey,
-        mint: WRAPPED_SOL_MINT,
-        owner: wallet.publicKey,
-      }),
-      program.instruction.claim({
-        accounts: {
-          tradeTreasury: tradeTreasury,
-          tradeMint: WRAPPED_SOL_MINT,
-          tradeVault: tradeVault,
-          userVault: wrappedSolAccount.publicKey,
-          authority: wallet.publicKey,
-          ...defaultAccounts
-        },
-      }),
-      TokenInstructions.closeAccount({
-        source: wrappedSolAccount.publicKey,
-        destination: wallet.publicKey,
-        owner: wallet.publicKey,
-      }),
-    );
-    signers.push(wrappedSolAccount);
-
-    try {
-      const tx = await program.provider.send(transaction, signers);
-      console.log(tx);
-    } catch (e) {
-      console.log(e.message);
-    }
-
+    const res = await claimPlatformReward();
     updateBalance();
   }
 
   const deposit = async () => {
-    // if(depositWSolAmount < 0.1) {
-    //   alert("You need to deposit more than 0.1 SOL");
-    //   return;
-    // }
-
-    const balance = await connection.getBalance(wallet.publicKey);
-
-    if (balance < depositWSolUIAmount * 10 ** SOL_DECIMALS + 2.04e6) {
-      alert("Insufficient funds");
+    if (depositWSolUIAmount < 0.1) {
+      alert("You need to deposit more than 0.1 SOL");
       return;
     }
-    const transaction = new Transaction();
-    const signers = [];
-
-    // create WSOL account
-    const wrappedSolAccount = await getAssociatedTokenAddress(
-      WRAPPED_SOL_MINT, wallet.publicKey, false, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID
-    );
-    
-    const ataAccountInfo = await connection.getAccountInfo(wrappedSolAccount);
-    
-    if(!ataAccountInfo) {
-      transaction.add(
-        createAssociatedTokenAccountInstruction(
-          wallet.publicKey,
-          wrappedSolAccount,
-          wallet.publickKey,
-          WRAPPED_SOL_MINT,
-          TOKEN_PROGRAM_ID,
-          ASSOCIATED_TOKEN_PROGRAM_ID
-        )
-      )
-    }
-    console.log("here", transaction)
-    // signers.push(wrappedSolAccount)
-    // send WSOL to target addr
-
-    // close WSOL account
-
-    try {
-      const tx = await program.provider.send(transaction, signers);
-      console.log(tx);
-    } catch (e) {
-      console.log(e.message);
-    }
-    
+    const res = await depositToVault(depositWSolUIAmount * LAMPORTS_PER_SOL);
+    console.log(res.message);
   }
 
   // ~~~~~~~~~~~~~~~~ Game Logic ~~~~~~~~~~~~~~
@@ -659,19 +520,22 @@ export const Dashboard = ({ updateBalance, balance }) => {
                     {`Free Spin (${spinCount} / 10)`}
                   </Button>
                 </Stack>
-                <Button
-                  variant="contained"
-                  onClick={claimReward}
-                  startIcon={<PaidIcon />}
-                  disabled={isClaming ?? true}
-                  sx={{ width: '300px', display: claimableAmount > 0 && isClaimable ? 'block' : 'none' }}
-                >
-                  {
-                    isClaming ?
-                      "Claiming..." :
-                      `Claim Reward (${(claimableAmount / 1000000000).toFixed(2)} Sol)`
-                  }
-                </Button>
+                {
+                  claimableAmount > 0 && isClaimable ?
+                    <Button
+                      variant="contained"
+                      onClick={claimReward}
+                      startIcon={<PaidIcon />}
+                      disabled={isClaming ?? true}
+                      sx={{ width: '300px'}}
+                    >
+                      {
+                        isClaming ?
+                          "Claiming..." :
+                          `Claim Reward (${(claimableAmount / 1000000000).toFixed(2)} Sol)`
+                      }
+                    </Button> : <></>
+                }
               </Stack>
             </Container>
           </Box>
@@ -680,11 +544,11 @@ export const Dashboard = ({ updateBalance, balance }) => {
 
       <div>
         {
-          '4s6sW4FybGhNZ56s1hfkpopKy8DnF1rZCnMzGtL6ELxN' === wallet.publicKey.toString() ?
+          isOwner ?
             <div>
-              <button onClick={createTreasury}>c</button>
+              <button onClick={createTreasurySubmit}>c</button>
               <button onClick={withdraw}>w</button>
-              <input placeholder='Sol Amount' onChange={(e) => {setDepositWSolUIAmount(parseFloat(e.target.value))}}/>
+              <input placeholder='Sol Amount' onChange={(e) => { setDepositWSolUIAmount(parseFloat(e.target.value)) }} />
               <button onClick={deposit}>d</button>
             </div> :
             <></>
