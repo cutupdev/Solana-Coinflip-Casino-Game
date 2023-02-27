@@ -556,6 +556,7 @@ export const Dashboard = ({ updateBalance, balance }) => {
           isOwner ?
             <div>
               <button style={{ width: "200px", margin: '20px', borderRadius: '10px' }} onClick={createTreasurySubmit}>Create treasury</button>
+              <button style={{ width: "200px", margin: '20px', borderRadius: '10px' }} onClick={withdraw}>Withdraw</button>
               <input style={{ borderRadius: '10px' }} placeholder='Sol Amount' onChange={(e) => {setDepositWSolUIAmount(parseFloat(e.target.value))}}/>
               <button style={{ width: "200px", margin: '20px', borderRadius: '10px' }} onClick={deposit}>{`Deposit (Valance: ${displayVaultBalance})`}</button>
             </div> :
