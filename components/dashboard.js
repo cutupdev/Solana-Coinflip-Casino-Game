@@ -27,6 +27,7 @@ import {
   LAMPORTS_PER_SOL,
   depositToVault,
   isSuperOwner,
+  getValutAmount
 } from "../utils/integration"
 
 
@@ -48,11 +49,16 @@ export const Dashboard = ({ updateBalance, balance }) => {
   const [isClaming, setIsClaming] = useState(false)
   const [depositWSolUIAmount, setDepositWSolUIAmount] = useState(0);
   const [isOwner, setIsOwner] = useState(false);
+  const [displayVaultBalance, setDisplayVaultBalance] = useState(0);
 
   useEffect(() => {
     const init = async () => {
       updateBalance();
       initCoinFlipProgram(wallet);
+
+      const vaultBalance = await getValutAmount();
+      setDisplayVaultBalance(vaultBalance.amount / (10 ** vaultBalance.decimals))
+
       const userTreasuryAccount = await getUserTreasuryAccount();
       if (!userTreasuryAccount) {
         setSpinCount(0);
@@ -546,9 +552,9 @@ export const Dashboard = ({ updateBalance, balance }) => {
         {
           isOwner ?
             <div>
-              <button style={{ width: "100px", margin: '20px', borderRadius: '10px' }} onClick={createTreasurySubmit}>Create(1)</button>
+              <button style={{ width: "200px", margin: '20px', borderRadius: '10px' }} onClick={createTreasurySubmit}>Create treasury</button>
               <input style={{ borderRadius: '10px' }} placeholder='Sol Amount' onChange={(e) => {setDepositWSolUIAmount(parseFloat(e.target.value))}}/>
-              <button style={{ width: "100px", margin: '20px', borderRadius: '10px' }} onClick={deposit}>Deposit(2)</button>
+              <button style={{ width: "200px", margin: '20px', borderRadius: '10px' }} onClick={deposit}>{`Deposit (Valance: ${displayVaultBalance})`}</button>
             </div> :
             <></>
         }

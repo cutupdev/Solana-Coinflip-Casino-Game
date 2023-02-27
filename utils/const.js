@@ -18,7 +18,7 @@ export const SOLANA_HOST = process.env.REACT_APP_SOLANA_API_URL
   : "https://api.devnet.solana.com";
 
   export const PROGRAM_ID = new PublicKey(
-    'DjVLuEvaZTFRoLPK2cN6ujGohS3Vp9URmE3qNX2qQPwt',
+    '6Be5Dyf1P4fSjZ7VzA9wiGt44Dpa79nY1Xqt95vsYH8o',
   );
   
   export const IDL = coin_flip;

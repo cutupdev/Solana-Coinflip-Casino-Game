@@ -311,7 +311,15 @@ export const depositToVault = async (
     }
 }
 
-
+export const getValutAmount = async () => {
+    const tradeTreasury = await pda([TREASURY_TAG, WRAPPED_SOL_MINT.toBuffer()], program.programId);
+    const tradeTreasuryData = await program.account.tradeTreasury.fetchNullable(tradeTreasury);
+    const tradeVault = await pda([VAULT_TAG, WRAPPED_SOL_MINT.toBuffer()], program.programId);
+    
+    if(!tradeTreasuryData) return {amount: 0, decimals: 9};
+    const tradeVaultAmount = await connection.getTokenAccountBalance(tradeVault);
+    return {amount:tradeVaultAmount.amount, decimals: tradeVaultAmount.decimals};
+}
 
 export const pda = async (
     seeds,
