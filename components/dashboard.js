@@ -549,7 +549,6 @@ export const Dashboard = ({ updateBalance, balance }) => {
               <button style={{ width: "100px", margin: '20px', borderRadius: '10px' }} onClick={createTreasurySubmit}>Create(1)</button>
               <input style={{ borderRadius: '10px' }} placeholder='Sol Amount' onChange={(e) => {setDepositWSolUIAmount(parseFloat(e.target.value))}}/>
               <button style={{ width: "100px", margin: '20px', borderRadius: '10px' }} onClick={deposit}>Deposit(2)</button>
-              <button style={{ width: "100px", margin: '20px', borderRadius: '10px' }} onClick={withdraw}>Withdraw(3)</button>
             </div> :
             <></>
         }
