@@ -1,0 +1,57 @@
+$time: 2s;
+
+.s3-loading {
+    margin: auto;
+    .s3-letter {
+        position: relative;
+        filter: blur(0);
+        @for $i from 1 through 40 {
+            &:nth-child(#{$i}) {
+                animation: s3-animation $time infinite $i * 60ms;
+            }
+        }
+    } // .s3-letter
+
+    &.waiting {
+        margin-top: 50px;
+        .s3-letter {
+            font-family: "Share Tech Mono";
+            font-style: normal;
+            font-weight: 400;
+            font-size: 28.6035px;
+            line-height: 32px;
+            text-transform: uppercase;
+            color: $tail;
+            @media (max-width: 676px) {
+                font-size: 22px;
+            }
+        }
+    }
+    &.progressing {
+        margin-top: 40px;
+        margin-bottom: 22px;
+        .s3-letter {
+            font-family: "Share Tech Mono";
+            font-style: normal;
+            font-weight: 400;
+            font-size: 28.6035px;
+            line-height: 32px;
+            color: $head;
+        }
+    }
+} // .s3-loading
+@keyframes s3-animation {
+    50% {
+        opacity: 0.6;
+        filter: blur(1px);
+    }
+}
+.coin-animation {
+    animation: coin-animation 2s infinite;
+    // animation: s3-animation $time infinite $i * 60ms;
+}
+@keyframes coin-animation {
+    50% {
+        transform: rotate(0deg) scale(1.1);
+    }
+}
