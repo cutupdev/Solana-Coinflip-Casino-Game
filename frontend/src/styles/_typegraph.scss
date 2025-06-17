@@ -1,0 +1,9 @@
+h2 {
+    font-size: 48px;
+    @media (max-width: 992px) {
+        font-size: 36px;
+    }
+    @media (max-width: 762px) {
+        font-size: 32px;
+    }
+}
