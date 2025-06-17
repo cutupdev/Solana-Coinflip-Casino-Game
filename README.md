@@ -1,37 +1,61 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Solana Coinflip Casino Game
 
-## Getting Started
+This is coinflip game on the Solana blockchain. As a play-to-earn game, I have implemented smart contract for security. Solana program was built by Anchor framework and UI is built by next.js. Backend was build by node.js. If you get difficulty to use this codebase, feel free to reach out of me when you need supports[Telegram: https://t.me/DevCutup, Whatspp: https://wa.me/13137423660].
 
-First, run the development server:
+
+
+## How to use it
 
 ```bash
-npm run dev
-# or
-yarn dev
+git clone https://github.com/cutupdev/Solana-Coinflip-Casino-Game.git
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+```bash
+cd ./Solana-Coinflip-Casino-Game
+```
 
-You can start editing the page by modifying `pages/index.js`. The page auto-updates as you edit the file.
+```bash
+npm run install
+```
 
-[API routes](https://nextjs.org/docs/api-routes/introduction) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.js`.
+- For smart contract deployment:
+```bash
+anchor build
+```
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/api-routes/introduction) instead of React pages.
+```bash
+anchor deploy
+```
 
-## Learn More
+- To start backend
+```bash
+cd ./backend
+```
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm run install
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm run start
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+- To start UI
+```bash
+cd ./frontend
+```
 
-## Deploy on Vercel
+```bash
+npm run install
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+npm run start
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
-"# Solana-CoinFlip" 
-"# Solana-Coinflip" 
-"# Solana-Coinflip" 
+
+
+### Contact Information
+- Telegram: https://t.me/DevCutup
+- Whatsapp: https://wa.me/13137423660
+- Twitter: https://x.com/devcutup
